@@ -14,12 +14,11 @@ class QuoteGenerator:
         self.data_file = "quotes.json"
         
         self.load_data()
+        
         self.create_widgets()
+        
         self.refresh_history_list()
         self.update_filter_options()
-        
-        self.author_filter.set("Все")
-        self.topic_filter.set("Все")
     
     def load_data(self):
         default_quotes = [
@@ -37,16 +36,7 @@ class QuoteGenerator:
                     data = json.load(f)
                     self.quotes = data.get("quotes", default_quotes)
                     self.history = data.get("history", [])
-            except json.JSONDecodeError:
-                messagebox.showerror("Ошибка", f"Файл {self.data_file} повреждён. Невозможно декодировать JSON. Будут использованы цитаты по умолчанию.")
-                self.quotes = default_quotes.copy()
-                self.history = []
-            except PermissionError:
-                messagebox.showerror("Ошибка", f"Нет доступа к файлу {self.data_file}. Проверьте права.")
-                self.quotes = default_quotes.copy()
-                self.history = []
-            except Exception as e:
-                messagebox.showerror("Ошибка", f"Неизвестная ошибка при загрузке: {str(e)}")
+            except:
                 self.quotes = default_quotes.copy()
                 self.history = []
         else:
@@ -60,13 +50,8 @@ class QuoteGenerator:
             "quotes": self.quotes,
             "history": self.history
         }
-        try:
-            with open(self.data_file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-        except PermissionError:
-            messagebox.showerror("Ошибка", f"Нет прав для записи в файл {self.data_file}")
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Не удалось сохранить данные: {str(e)}")
+        with open(self.data_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
     
     def create_widgets(self):
         top_frame = LabelFrame(self.root, text="Генератор цитат", padx=10, pady=10)
@@ -75,6 +60,7 @@ class QuoteGenerator:
         self.generate_btn = Button(top_frame, text="Сгенерировать цитату", font=("Arial", 12), command=self.generate_quote)
         self.generate_btn.pack(pady=5)
         
+        # Отображение текущей цитаты
         self.current_quote_frame = LabelFrame(self.root, text="Текущая цитата", padx=10, pady=10)
         self.current_quote_frame.pack(fill=X, padx=10, pady=5)
         
@@ -130,7 +116,7 @@ class QuoteGenerator:
         self.history_listbox.pack(fill=BOTH, expand=True)
         scrollbar.config(command=self.history_listbox.yview)
         
-        self.clear_history_btn = Button(history_frame, text="🗑 Очистить историю", 
+        self.clear_history_btn = Button(history_frame, text="Очистить историю", 
                                         command=self.clear_history, bg="#ffcccc")
         self.clear_history_btn.pack(pady=5)
     
@@ -155,14 +141,6 @@ class QuoteGenerator:
         self.refresh_history_list()
         self.update_filter_options()
     
-    def is_quote_unique(self, text, author, topic):
-        for quote in self.quotes:
-            if (quote['text'].lower() == text.lower() and 
-                quote['author'].lower() == author.lower() and 
-                quote['topic'].lower() == topic.lower()):
-                return False
-        return True
-    
     def add_quote(self):
         text = self.new_text_entry.get("1.0", END).strip()
         author = self.new_author_entry.get().strip()
@@ -176,10 +154,6 @@ class QuoteGenerator:
             return
         if not topic:
             messagebox.showerror("Ошибка", "Тема не может быть пустой!")
-            return
-        
-        if not self.is_quote_unique(text, author, topic):
-            messagebox.showerror("Ошибка", "Такая цитата уже существует в списке!")
             return
         
         new_quote = {
